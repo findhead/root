@@ -42,17 +42,6 @@ void severinit() {
 		if(num < 0) continue;
 		if (num > 0) {
 			for (int i = 0; i < num; ++i) {
-				if (ev[i].events & (EPOLLRDHUP|EPOLLHUP|EPOLLERR)) {
-
-					if (epoll_ctl(epfd, EPOLL_CTL_DEL, lfd, NULL) == -1 && errno != EBADF) {
-						perror("epoll_ctl DEL failed");
-					}
-
-					if (close(lfd) == -1 && errno != EBADF) {
-						perror("close failed");
-					}
-					continue;
-				}
 				if (ev[i].data.fd == lfd) {
 					int nfd = accept(lfd, NULL, NULL);
 					struct epoll_event next;
