@@ -13,7 +13,6 @@ void* myptbread_read(void* args) {
     int lfd = *fd_ptr;
    // delete fd_ptr; // 释放动态分配的内存
     
-    // 1. 读取请求（带错误处理和边界检查）
     char buf[4096];
     ssize_t bytes_read = read(lfd, buf, sizeof(buf) - 1);
     
@@ -21,22 +20,17 @@ void* myptbread_read(void* args) {
         if (bytes_read < 0) {
             perror("read error");
         }
-        close(lfd);
         return nullptr;
     }
     buf[bytes_read] = '\0';
     
-    // 2. 验证HTTP请求（简化版）
     if (strstr(buf, "HTTP/") == nullptr) {
         const char* bad_request = 
             "HTTP/1.1 400 Bad Request\r\n"
             "Content-Length: 0\r\n\r\n";
-        write(lfd, bad_request, strlen(bad_request));
-        close(lfd);
         return nullptr;
     }
     
-    // 3. 构建精确长度的响应
     const std::string content = "<h1>hello world!</h1>";
     std::string response = 
         "HTTP/1.1 200 OK\r\n"
@@ -45,7 +39,6 @@ void* myptbread_read(void* args) {
         "Content-Length: " + std::to_string(content.length()) + "\r\n\r\n" +
         content;
     
-    // 4. 循环写入确保完整发送
     size_t total_sent = 0;
     const char* response_data = response.c_str();
     size_t response_len = response.length();
@@ -69,7 +62,6 @@ void* myptbread_read(void* args) {
         }
     }
     
-    // 5. 诊断输出
     if (total_sent == response_len) {
         std::cout << "Success: Sent " << total_sent << " bytes" << std::endl;
     } else {
@@ -77,9 +69,6 @@ void* myptbread_read(void* args) {
                   << " bytes (" << (100.0 * total_sent / response_len) << "%)" << std::endl;
     }
     
-    // 6. 优雅关闭连接
-    shutdown(lfd, SHUT_RDWR); // 完全关闭读写
-    close(lfd);
     
     return nullptr;
 }
